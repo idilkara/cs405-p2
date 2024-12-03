@@ -29,6 +29,12 @@ Task 2:
 Task 3: 
 
     Steps to try: 
+    1. Choose file for the "Obj Model": sphere.obj or cube.obj
+    2. Choose file for the "Texture image": leaves.jpg or nyra.png or bricks.png
+    3. Check the "Enable Light" option.
+    4. Adjust the "Specular Light Intensity".
+    5. Adjust the light position using arrow keys.
+    Note: This task is implemented upon task 2 so the ambient light is also effective and the slider for "Ambient Light Density" still adjusts the ambient light density.
 
 Task 4: 
 
