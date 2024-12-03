@@ -131,10 +131,17 @@ class MeshDrawer {
 		if (isPowerOf2(img.width) && isPowerOf2(img.height)) {
 			gl.generateMipmap(gl.TEXTURE_2D);
 		} else {
-			console.error("Task 1: Non power of 2, you should implement this part to accept non power of 2 sized textures");
+			//console.error("Task 1: Non power of 2, you should implement this part to accept non power of 2 sized textures");
 			/**
 			 * @Task1 : You should implement this part to accept non power of 2 sized textures
 			 */
+
+			//for task 1: I wrap horizontally and vertically and set minimizing and maximizing options for the texture.
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
 		}
 
 		gl.useProgram(this.prog);
