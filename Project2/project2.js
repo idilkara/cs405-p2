@@ -66,6 +66,19 @@ class MeshDrawer {
 		 * @Task2 : You should initialize the required variables for lighting here
 		 */
 		
+		//for task 2 I initialize the normal buffer and lightPos, enableLighting I get set via the functions to be used within the shaders.
+		//initialize normal buffers
+		this.normalBuffer=gl.createBuffer();
+		this.normalLoc = gl.getAttribLocation(this.prog, 'normal');
+
+		//lightPosition (gets updated with arrow movements) , ambient (setambientlight), enableLight 
+		this.lightPosLoc = gl.getUniformLocation(this.prog, 'lightPos');
+		this.enableLightingLoc = gl.getUniformLocation(this.prog, 'enableLighting');
+        this.ambientLoc = gl.getUniformLocation(this.prog, 'ambient');
+
+		//ensuring the use of this.prog :
+		gl.useProgram(this.prog);
+
 	}
 
 	setMesh(vertPos, texCoords, normalCoords) {
@@ -81,6 +94,11 @@ class MeshDrawer {
 		/**
 		 * @Task2 : You should update the rest of this function to handle the lighting
 		 */
+
+		//for task2, same what as above but for the normal coordinates. "update normal coords"
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalCoords), gl.STATIC_DRAW);
+
 	}
 
 	// This method is called to draw the triangular mesh.
@@ -102,6 +120,17 @@ class MeshDrawer {
 		/**
 		 * @Task2 : You should update this function to handle the lighting
 		 */
+
+		// for task2: 
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+		gl.enableVertexAttribArray(this.normalLoc);
+		gl.vertexAttribPointer(this.normalLoc, 3, gl.FLOAT, false, 0, 0);
+
+		//for task 2 (and 3) store the light position in ligth position location.
+		//it is going to be the negative of the light direction in z axis. 
+		// I also set it like the illumination is coming from the camera's view so z =1.0, and for light direction calculation it will turn around to  direct at -z. 
+		//(note that it is not parallel to z axis due to the variance in x and y coordinates) 
+		gl.uniform3f(this.lightPosLoc, lightX, lightY, 1.0); 
 
 		///////////////////////////////
 
@@ -131,6 +160,7 @@ class MeshDrawer {
 		if (isPowerOf2(img.width) && isPowerOf2(img.height)) {
 			gl.generateMipmap(gl.TEXTURE_2D);
 		} else {
+
 			//console.error("Task 1: Non power of 2, you should implement this part to accept non power of 2 sized textures");
 			/**
 			 * @Task1 : You should implement this part to accept non power of 2 sized textures
@@ -157,10 +187,26 @@ class MeshDrawer {
 	}
 
 	enableLighting(show) {
-		console.error("Task 2: You should implement the lighting and implement this function ");
+		//console.error("Task 2: You should implement the lighting and implement this function ");
 		/**
 		 * @Task2 : You should implement the lighting and implement this function
 		 */
+
+		//for task2, after ensuring this.prog is used, depending on the value of show, I set the value in enablelighting location to 1 or 0. 
+		//if the value is 1, it means the lighting is enabled, I set ambient and specular lights to be visible (this can be modified with the sliders later.)
+		gl.useProgram(this.prog);
+
+		if (show){
+			gl.uniform1i(this.enableLightingLoc, 1);
+				
+				//this is to set a default value
+				this.setAmbientLight(0.50); 
+				this.setSpecularLight(50.0); 
+		}
+		else{
+			gl.uniform1i(this.enableLightingLoc, 0);
+		}
+
 	}
 	
 	setAmbientLight(ambient) {
@@ -168,6 +214,12 @@ class MeshDrawer {
 		/**
 		 * @Task2 : You should implement the lighting and implement this function
 		 */
+
+		//for task2, after ensuring this.prog is used,  
+		// I store "ambient" value got from the slider, in the ambient location
+		gl.useProgram(this.prog);
+		gl.uniform1f(this.ambientLoc, ambient);
+
 	}
 }
 
@@ -228,7 +280,24 @@ const meshFS = `
 			{
 				if(showTex && enableLighting){
 					// UPDATE THIS PART TO HANDLE LIGHTING
-					gl_FragColor = texture2D(tex, v_texCoord);
+					//gl_FragColor = texture2D(tex, v_texCoord); //given version
+					
+					//this would be sufficient to see for task 1-2-3 but for task 4 I mix two textures and set it as the blended texture.
+					vec4 blendedTexture = texture2D(tex, v_texCoord); 
+
+					vec3 lightColor = vec3(1.0,1.0,1.0); //not required since using colorFromTex would be sufficient for the multiplicaitons. but in the lab codes a light color was used, so I am using.  
+					
+					vec3 normal = normalize(v_normal); // normalize it otherwise the light intensity is too much
+					vec3 lightDir = normalize(-lightPos); //negative of the light pos 
+					vec3 viewDir = normalize(vec3(0.0, 0.0, -1.0)); //I hardcoded it since the camera is fixed for this project. looks at -z.
+					
+					//for task 2:
+					vec3 ambientLight = ambient * lightColor ;
+					float light = max(dot(normal, lightDir), 0.0); //intensity 
+					vec3 diffuseLight = light * lightColor ;
+					
+					vec3 finalLighting = (ambientLight + diffuseLight ) * blendedTexture.rgb; //for task2 using this as the final lighting would be enough. 
+					gl_FragColor = vec4(finalLighting, blendedTexture.a) ; 
 				}
 				else if(showTex){
 					gl_FragColor = texture2D(tex, v_texCoord);
