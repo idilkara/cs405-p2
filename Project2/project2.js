@@ -201,7 +201,7 @@ class MeshDrawer {
 				
 				//this is to set a default value
 				this.setAmbientLight(0.50); 
-				this.setSpecularLight(50.0); 
+				
 		}
 		else{
 			gl.uniform1i(this.enableLightingLoc, 0);
@@ -254,7 +254,13 @@ const meshVS = `
 			void main()
 			{
 				v_texCoord = texCoord;
-				v_normal = normal;
+				//v_normal = normal; //this was the previous version, this works but when the object rotates, the light source seems to rotate with it too. 
+													//so always the same part of the object is lit unless I move the light source.
+
+				//for task 2 and 3: this version to est v_normal, updates the normals as the object moves. 
+				// This is to keep the light reflections coming from a nonmoving source.
+				// Otherwise, the light source seems to rotate with the object
+				v_normal = mat3(mvp)*normal; 
 
 				gl_Position = mvp * vec4(pos,1);
 			}`;
