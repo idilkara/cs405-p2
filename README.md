@@ -18,6 +18,11 @@ Task 1:
 Task 2:
 
     Steps to try: 
+    1. Choose file for the "Obj Model": sphere.obj or cube.obj
+    2. Choose file for the "Texture image": leaves.jpg or nyra.png or bricks.png
+    3. Check the "Enable Light" option.
+    4. Adjust the "Ambient Light Density".
+    5. Adjust the light position using arrow keys.
 
     
 
