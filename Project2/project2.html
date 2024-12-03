@@ -285,6 +285,13 @@ function SetAmbientLight( param )
 	DrawScene();
 }
 
+// I added this function for task 3
+function SetSpecularLight( param )
+{
+	meshDrawer.setSpecularLight( param.value );
+	DrawScene();
+}
+
 function LoadObj( param )
 {
     

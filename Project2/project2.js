@@ -76,6 +76,9 @@ class MeshDrawer {
 		this.enableLightingLoc = gl.getUniformLocation(this.prog, 'enableLighting');
         this.ambientLoc = gl.getUniformLocation(this.prog, 'ambient');
 
+		//for task3, similar to the ambient lighting, the intensity of specular light is set. 
+		this.specularLoc = gl.getUniformLocation(this.prog, 'specular');
+
 		//ensuring the use of this.prog :
 		gl.useProgram(this.prog);
 
@@ -201,7 +204,7 @@ class MeshDrawer {
 				
 				//this is to set a default value
 				this.setAmbientLight(0.50); 
-				
+				this.setSpecularLight(50.0); 
 		}
 		else{
 			gl.uniform1i(this.enableLightingLoc, 0);
@@ -210,7 +213,7 @@ class MeshDrawer {
 	}
 	
 	setAmbientLight(ambient) {
-		console.error("Task 2: You should implement the lighting and implement this function ");
+		//console.error("Task 2: You should implement the lighting and implement this function ");
 		/**
 		 * @Task2 : You should implement the lighting and implement this function
 		 */
@@ -220,6 +223,12 @@ class MeshDrawer {
 		gl.useProgram(this.prog);
 		gl.uniform1f(this.ambientLoc, ambient);
 
+	}
+
+	//for task3 I need to get and set the value for the intensity of specular light so I wrote the function similar to setAmbientLight function.
+	setSpecularLight(specular) {
+		gl.useProgram(this.prog);
+		gl.uniform1f(this.specularLoc, specular);
 	}
 }
 
@@ -282,6 +291,8 @@ const meshFS = `
 			varying vec2 v_texCoord;
 			varying vec3 v_normal;
 
+			uniform float specular; //for task3
+
 			void main()
 			{
 				if(showTex && enableLighting){
@@ -301,8 +312,19 @@ const meshFS = `
 					vec3 ambientLight = ambient * lightColor ;
 					float light = max(dot(normal, lightDir), 0.0); //intensity 
 					vec3 diffuseLight = light * lightColor ;
+
+					//for task3: 
+					vec3 reflectDir = reflect(-lightDir,  normal); //calcualte the reflection vector
+					float spec = 0.0;
+					if (light > 0.0) { //this conditon is to ensure that the front is lit and not the behind of the object but "max(dot(viewDir, reflectDir), 0.0)" can be handling this, I use the if statement to make sure.
+						spec = pow(max(dot(viewDir, reflectDir), 0.0), specular); //specular intensity on the point based on the specular factor .
+					}
+					vec3 specularLight = spec *  lightColor ; 
 					
-					vec3 finalLighting = (ambientLight + diffuseLight ) * blendedTexture.rgb; //for task2 using this as the final lighting would be enough. 
+					//vec3 finalLighting = (ambientLight + diffuseLight ) * blendedTexture.rgb; //for task2 using this as the final lighting would be enough. 
+
+					// final lighting for task 3 with task 2.
+					vec3 finalLighting = (ambientLight + diffuseLight + specularLight) * blendedTexture.rgb; 
 					gl_FragColor = vec4(finalLighting, blendedTexture.a) ; 
 				}
 				else if(showTex){
