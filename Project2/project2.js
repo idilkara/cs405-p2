@@ -79,6 +79,11 @@ class MeshDrawer {
 		//for task3, similar to the ambient lighting, the intensity of specular light is set. 
 		this.specularLoc = gl.getUniformLocation(this.prog, 'specular');
 
+		//for task4, I use a blending factor set via a slider in the html which calls the function here, setblendingfactor() 
+		this.blendFactorLoc =  gl.getUniformLocation(this.prog, 'blendFactor');
+		// this.sampler = gl.getUniformLocation(this.prog, 'tex'); //already got this from loading the first texture
+		// this.sampler2 = gl.getUniformLocation(this.prog, 'tex2'); ///already got this from loading the second texture
+
 		//ensuring the use of this.prog :
 		gl.useProgram(this.prog);
 
@@ -135,6 +140,13 @@ class MeshDrawer {
 		//(note that it is not parallel to z axis due to the variance in x and y coordinates) 
 		gl.uniform3f(this.lightPosLoc, lightX, lightY, 1.0); 
 
+		//for task 4 - I active and bind the texture here too for blending ( to ensure it works properly. )
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.texture); 
+		gl.activeTexture(gl.TEXTURE1);
+		gl.bindTexture(gl.TEXTURE_2D, this.texture2); 
+
+
 		///////////////////////////////
 
 
@@ -178,10 +190,61 @@ class MeshDrawer {
 		}
 
 		gl.useProgram(this.prog);
+
+		//for task 4 I use the texture in draw(trans) to activate and bind again : 
+		this.texture = texture;
+
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		const sampler = gl.getUniformLocation(this.prog, 'tex');
 		gl.uniform1i(sampler, 0);
+	}
+
+	//for task4: setSecondTexture - similar to how setTexture works. 
+	//in the html file there is a  LoadTexture2( param ) function which calls this. 
+	setSecondTexture(img) {
+		const texture2 = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, texture2);
+	
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGB,
+			gl.RGB,
+			gl.UNSIGNED_BYTE,
+			img
+		);
+	
+		if (isPowerOf2(img.width) && isPowerOf2(img.height)) {
+			gl.generateMipmap(gl.TEXTURE_2D);
+		} else {
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		}
+	
+		gl.useProgram(this.prog);
+
+		//I use the texture2 in draw(trans) to activate and bind again : 
+		//also I set the blendfactor to 0.5 when there is the second texture so the belnding effect is immediately visible.
+		this.texture2 = texture2;
+		this.setBlendFactor(0.5); 
+
+		gl.activeTexture(gl.TEXTURE1);
+		gl.bindTexture(gl.TEXTURE_2D, texture2);
+		const sampler2 = gl.getUniformLocation(this.prog, 'tex2');
+		gl.uniform1i(sampler2, 1);
+	}
+
+	//for task 4: this is a parameter to toggle between textures.
+	// if it is 0.0 it means only the first image will be fully visible.
+	// if it is 1.0 it means only the second image will be fully visible.
+	// in between means the result will be a blended version of the two textures.
+	// this is called from the html file with a function thats used via a slider. 
+	setBlendFactor(factor) {
+		gl.useProgram(this.prog);
+		gl.uniform1f(this.blendFactorLoc, factor);
 	}
 
 	showTexture(show) {
@@ -292,6 +355,8 @@ const meshFS = `
 			varying vec3 v_normal;
 
 			uniform float specular; //for task3
+			uniform float blendFactor; //for task4 // it is a value between 0 and 1
+			uniform sampler2D tex2; //for task4
 
 			void main()
 			{
@@ -299,8 +364,14 @@ const meshFS = `
 					// UPDATE THIS PART TO HANDLE LIGHTING
 					//gl_FragColor = texture2D(tex, v_texCoord); //given version
 					
-					//this would be sufficient to see for task 1-2-3 but for task 4 I mix two textures and set it as the blended texture.
-					vec4 blendedTexture = texture2D(tex, v_texCoord); 
+					//the line below would be sufficient to see for task 1-2-3 but for task 4 I mix two textures and set it as the blended texture.
+					//vec4 blendedTexture = texture2D(tex, v_texCoord); 
+
+					//blend two textures for task 4:
+					//for the vertex colors set by the textures tex and tex2:
+					vec4 texColor1 = texture2D(tex, v_texCoord);
+					vec4 texColor2 = texture2D(tex2, v_texCoord);
+					vec4 blendedTexture = mix(texColor1, texColor2, blendFactor);
 
 					vec3 lightColor = vec3(1.0,1.0,1.0); //not required since using colorFromTex would be sufficient for the multiplicaitons. but in the lab codes a light color was used, so I am using.  
 					
@@ -323,12 +394,19 @@ const meshFS = `
 					
 					//vec3 finalLighting = (ambientLight + diffuseLight ) * blendedTexture.rgb; //for task2 using this as the final lighting would be enough. 
 
-					// final lighting for task 3 with task 2.
+					// final lighting and texture together for task 2, 3 and 4 altogether.
 					vec3 finalLighting = (ambientLight + diffuseLight + specularLight) * blendedTexture.rgb; 
 					gl_FragColor = vec4(finalLighting, blendedTexture.a) ; 
+
 				}
 				else if(showTex){
-					gl_FragColor = texture2D(tex, v_texCoord);
+					//gl_FragColor = texture2D(tex, v_texCoord); //default version, works for tasks 1, 2 and 3. 
+
+					//for task4: sets a mixture of two textures as the fragColor instead of one texture.
+					vec4 texColor1 = texture2D(tex, v_texCoord);
+					vec4 texColor2 = texture2D(tex2, v_texCoord);
+					vec4 blendedTexture = mix(texColor1, texColor2, blendFactor);
+					gl_FragColor = blendedTexture;
 				}
 				else{
 					gl_FragColor =  vec4(1.0, 0, 0, 1.0);

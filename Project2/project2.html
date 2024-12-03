@@ -292,6 +292,12 @@ function SetSpecularLight( param )
 	DrawScene();
 }
 
+// I added this function for task 4
+function SetBlendFactor(param) {
+	meshDrawer.setBlendFactor(param.value/100);
+	DrawScene();
+}
+
 function LoadObj( param )
 {
     
@@ -340,6 +346,27 @@ function LoadTexture( param )
 		reader.readAsDataURL( param.files[0] );
 	}
 	meshDrawer.showTexture( true );
+	DrawScene();
+}
+
+//I added this function for task 4:
+function LoadTexture2( param )
+{
+	if ( param.files && param.files[0] ) {
+		var reader = new FileReader();
+		reader.onload = function(e) {
+			var img = new Image();
+			img.src = e.target.result;
+			document.getElementById('texture-img').src = e.target.result;
+			img.onload = function() {
+				meshDrawer.setSecondTexture( img );
+				DrawScene();
+			}
+			console.log(param.files[0])
+		};
+		reader.readAsDataURL( param.files[0] );
+	}
+	meshDrawer.showTexture( true ); 
 	DrawScene();
 }
 
@@ -440,6 +467,10 @@ canvas {
 <div class="control"><input id="rotation-speed" type="range" min="1" max="100" value="50" disabled/>Rotation</div>
 <div class="control"><input id="ambient-light-setter" type="range" min="1" max="99" value="50" onchange="SetAmbientLight(this)"/>Ambient Light Density</div>
 <div class="control"><input id="specular-light-setter" type="range" min="1" max="100" value="50" onchange="SetSpecularLight(this)"/>Specular Light Intensity</div>
+
+<div class="control">
+	<input type="range" id="blendFactor" min="0" max="100" value="50" oninput="SetBlendFactor(this)" />   Texture Spectrum (from the first texture to the second texture)
+</div>
 
 </div>
 
