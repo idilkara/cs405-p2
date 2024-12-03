@@ -6,7 +6,7 @@ cs405 project 2
 # This repository contains:
     project2.html and project2.js and obj.js files and some resources for textures and object models in the resources folder.
 
-#The project consists of 4 tasks:
+# The project consists of 4 tasks:
 
 ## Task 1:
 Allow any sized images as input for texture. 
